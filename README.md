@@ -55,7 +55,7 @@ Yes, in the practical sense that the model acts like an agent and calls a docume
 ## 🏗️ Architecture
 
 ```text
-┌─────────────────┐      TavilyCrawl       ┌──────────────────┐
+┌─────────────────┐       TavilyCrawl       ┌──────────────────┐
 │ docs.langchain  │ ──────────────────────► │   ingestion.py   │
 │     .com/       │   raw_content + URL     │ split (1000/200) │
 └─────────────────┘                         │ embed MiniLM-L6  │
@@ -72,7 +72,7 @@ Yes, in the practical sense that the model acts like an agent and calls a docume
 │  User    │ ───────────► │  Streamlit (main.py) │ ───────► │ LangChain    │
 │ (browser)│ ◄─────────── │  ask_agent()         │ ◄─────── │ Agent +      │
 └──────────┘   markdown   └──────────────────────┘  answer  │ Ollama LLM   │
-                                                           └──────────────┘
+                                                            └──────────────┘
 ```
 
 **Flow:**
@@ -139,8 +139,8 @@ This is a minimal agentic workflow: an agent with one retrieval tool, not a broa
 
 ```bash
 # 1. Clone
-git clone https://github.com/<your-username>/AI-Documentation-Assistant-Agentic-RAG.git
-cd AI-Documentation-Assistant-Agentic-RAG
+git clone https://github.com/Ahmed-Maher77/AI-Documentation-Assistant___Agentic-RAG-Style-Retrieval-Assistant.git
+cd AI-Documentation-Assistant___Agentic-RAG-Style-Retrieval-Assistant
 
 # 2. Install dependencies (uv)
 uv sync
