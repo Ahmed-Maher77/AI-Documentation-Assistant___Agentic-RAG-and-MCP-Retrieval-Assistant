@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 from langchain.agents import create_agent
 from langchain_ollama import ChatOllama
 
-from tools import retrieve_relevant_chunks, fetch_up_to_date_doc, fetch_llms_txt_index
+from tools import retrieve_relevant_chunks, fetch_llms_txt_index, fetch_up_to_date_doc
 
 load_dotenv()
 
@@ -74,16 +74,17 @@ When the user asks a question about LangChain:
 
 1. Always start by using the `retrieve_relevant_chunks` tool to query the local vector index.
 2. Read the `[RETRIEVAL EVALUATION]` header returned by `retrieve_relevant_chunks`.
-3. If the evaluation status is `INSUFFICIENT` or `PARTIALLY_SUFFICIENT`, follow the recommendation and call `fetch_llms_txt_index` or `fetch_up_to_date_doc` to retrieve live up-to-date documentation.
+3. If the evaluation status is `INSUFFICIENT` or `PARTIALLY_SUFFICIENT`:
+   - PREFER to first call `fetch_llms_txt_index` to inspect the official LangChain llms.txt index.
+   - If `fetch_llms_txt_index` does not provide sufficient details or if a specific live web search is required, call `fetch_up_to_date_doc`.
 4. Synthesize your final answer based strictly on the retrieved documentation chunks and fetched live content.
 5. Do not invent information that is not supported by the retrieved documentation.
 6. If no relevant documentation can be found after checking live sources, inform the user clearly.
 """
 
-
     return create_agent(
         model=llm,
-        tools=[retrieve_relevant_chunks, fetch_up_to_date_doc, fetch_llms_txt_index],
+        tools=[retrieve_relevant_chunks, fetch_llms_txt_index, fetch_up_to_date_doc],
         system_prompt=system_prompt,
     )
 

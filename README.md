@@ -68,7 +68,7 @@ Ask it anything about LangChain — concepts, LCEL, LangGraph, agents, tools, me
 1. Agent queries `retriever_tool.py` (`retrieve_relevant_chunks`).
 2. Evaluator computes cosine similarity, character density, and keyword coverage.
 3. If status is `SUFFICIENT`, agent synthesizes answer directly.
-4. If status is `INSUFFICIENT` or `PARTIALLY_SUFFICIENT`, agent uses `llms_txt_tool` (`fetch_llms_txt_index`) or `doc_fetch_tool` (`fetch_up_to_date_doc`) to retrieve live, up-to-date documentation before answering.
+4. If status is `INSUFFICIENT` or `PARTIALLY_SUFFICIENT`, agent prefers `llms_txt_tool` (`fetch_llms_txt_index`) first to inspect official documentation indexes. If more detail or live web search is needed, it uses `doc_fetch_tool` (`fetch_up_to_date_doc` powered by Tavily Search) to retrieve live, up-to-date documentation before answering.
 
 ---
 
@@ -202,8 +202,8 @@ uv run python mcp_server.py
 
 **Exposed MCP Tools:**
 - `search_langchain_docs(query)` — Vector search with CRAG evaluation headers.
-- `fetch_langchain_llms_txt_index(section)` — Fetches `llms.txt` indexes (`python`, `langgraph`, `deepagents`, `master`).
-- `fetch_up_to_date_documentation(url)` — Fetches real-time web documentation or raw `.md` via `llms.txt` endpoints.
+- `fetch_langchain_llms_txt_index(section)` — Fetches official `llms.txt` indexes (`python`, `langgraph`, `deepagents`, `master`). Preferred first.
+- `fetch_up_to_date_documentation(query)` — Searches and fetches real-time web documentation via Tavily Search.
 - `ask_documentation_assistant(user_question)` — Full agent response synthesis.
 
 ### 2. Debugging with MCP Inspector 🛠️
@@ -222,7 +222,7 @@ npx @modelcontextprotocol/inspector uv run python mcp_server.py
 ## 🧠 How the Agent Works (`langchain_agent.py`)
 
 ```python
-from tools import retrieve_relevant_chunks, fetch_up_to_date_doc, fetch_llms_txt_index
+from tools import retrieve_relevant_chunks, fetch_llms_txt_index, fetch_up_to_date_doc
 
 def create_langchain_agent():
     ensure_ollama_server()
@@ -232,10 +232,12 @@ def create_langchain_agent():
 You are an AI documentation assistant.
 1. Always start by using retrieve_relevant_chunks to query local vector index.
 2. Read the [RETRIEVAL EVALUATION] header returned by retrieve_relevant_chunks.
-3. If status is INSUFFICIENT or PARTIALLY_SUFFICIENT, follow recommendation to call fetch_llms_txt_index or fetch_up_to_date_doc.
+3. If status is INSUFFICIENT or PARTIALLY_SUFFICIENT:
+   - Prefer calling fetch_llms_txt_index first to check official index.
+   - If insufficient or specific live web search is needed, call fetch_up_to_date_doc.
 4. Synthesize final answer based strictly on retrieved documentation.
 """
-    return create_agent(model=llm, tools=[retrieve_relevant_chunks, fetch_up_to_date_doc, fetch_llms_txt_index], system_prompt=system_prompt)
+    return create_agent(model=llm, tools=[retrieve_relevant_chunks, fetch_llms_txt_index, fetch_up_to_date_doc], system_prompt=system_prompt)
 ```
 
 ---

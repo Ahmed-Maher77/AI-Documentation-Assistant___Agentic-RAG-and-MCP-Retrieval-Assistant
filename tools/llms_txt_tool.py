@@ -4,7 +4,9 @@ from langchain.tools import tool
 
 @tool
 def fetch_llms_txt_index(section: str = "python") -> str:
-    """Fetch the official llms.txt documentation index from LangChain (sections: master, python, langgraph, deepagents)."""
+    """Fetch the official llms.txt documentation index from LangChain (sections: master, python, langgraph, deepagents).
+    This is the PREFERRED first-choice live tool to check when local documentation chunks are insufficient before falling back to web search.
+    """
     urls = {
         "master": "https://python.langchain.com/llms.txt",
         "python": "https://docs.langchain.com/oss/python/langchain/llms.txt",

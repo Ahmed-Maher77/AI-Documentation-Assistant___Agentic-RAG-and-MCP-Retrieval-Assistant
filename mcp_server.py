@@ -8,8 +8,8 @@ from mcp.server.fastmcp import FastMCP
 from langchain_agent import ask_agent
 from tools import (
     retrieve_relevant_chunks,
-    fetch_up_to_date_doc,
     fetch_llms_txt_index,
+    fetch_up_to_date_doc,
 )
 
 # Initialize FastMCP Server
@@ -24,14 +24,14 @@ def search_langchain_docs(query: str) -> str:
 
 @mcp.tool()
 def fetch_langchain_llms_txt_index(section: str = "python") -> str:
-    """Fetch official LangChain llms.txt documentation index (sections: master, python, langgraph, deepagents)."""
+    """Fetch official LangChain llms.txt documentation index (sections: master, python, langgraph, deepagents). Preferred live lookup tool."""
     return fetch_llms_txt_index.invoke({"section": section})
 
 
 @mcp.tool()
-def fetch_up_to_date_documentation(url: str) -> str:
-    """Fetch real-time, up-to-date documentation content directly from a live web URL or raw .md via llms.txt endpoint."""
-    return fetch_up_to_date_doc.invoke({"url": url})
+def fetch_up_to_date_documentation(query: str) -> str:
+    """Search and fetch real-time, up-to-date documentation and web results using Tavily Search."""
+    return fetch_up_to_date_doc.invoke({"query": query})
 
 
 @mcp.tool()

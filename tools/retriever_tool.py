@@ -44,7 +44,7 @@ def evaluate_retrieved_docs(query: str, docs_with_scores: List[Tuple]) -> dict:
             "confidence_score": 0.0,
             "is_sufficient": False,
             "reason": "No vector chunks matched the query in the local index.",
-            "recommendation": "Use `fetch_llms_txt_index` or `fetch_up_to_date_doc` to retrieve live up-to-date documentation.",
+            "recommendation": "Prefer calling `fetch_llms_txt_index` first to check official documentation index. If insufficient or specific search is needed, use `fetch_up_to_date_doc`.",
         }
 
     # Extract scores
@@ -72,11 +72,11 @@ def evaluate_retrieved_docs(query: str, docs_with_scores: List[Tuple]) -> dict:
     elif is_high_relevance or is_sufficient_length:
         status = "PARTIALLY_SUFFICIENT"
         confidence = round(max(0.3, avg_score), 2)
-        recommendation = "Local docs may be incomplete. Consider verifying with `fetch_up_to_date_doc` or `fetch_llms_txt_index` if extra details are needed."
+        recommendation = "Local docs may be incomplete. Prefer checking `fetch_llms_txt_index` first, or search/verify with `fetch_up_to_date_doc` if extra details are needed."
     else:
         status = "INSUFFICIENT"
         confidence = round(max(0.1, avg_score), 2)
-        recommendation = "Local indexed chunks have low relevance. Use `fetch_llms_txt_index` or `fetch_up_to_date_doc` to retrieve live, up-to-date documentation."
+        recommendation = "Local indexed chunks have low relevance. First use `fetch_llms_txt_index` to check official index; if more information is needed, use `fetch_up_to_date_doc` for live search."
 
     return {
         "status": status,
