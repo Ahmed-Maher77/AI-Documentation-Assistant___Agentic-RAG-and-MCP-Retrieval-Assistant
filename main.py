@@ -64,6 +64,16 @@ with st.sidebar:
             st.error("No saved chat found.")
 
     st.divider()
+
+    # MCP Server & Debugging
+    with st.expander("🛠️ MCP & Debugging"):
+        st.markdown("**Model Context Protocol (MCP)**")
+        st.caption("This app includes an MCP Server and live document fetching (MCPDoc/Fetch).")
+        st.markdown("**Debug with MCP Inspector:**")
+        st.code("npx @modelcontextprotocol/inspector uv run python mcp_server.py", language="bash")
+        st.caption("Run the above command in terminal to launch interactive MCP Inspector UI.")
+
+    st.divider()
     st.caption(
         "© 2026 Developed by [Ahmed Maher](https://ahmedmaher-portfolio.vercel.app/)"
     )

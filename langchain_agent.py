@@ -2,15 +2,13 @@ import json
 import os
 import subprocess
 import time
-from urllib.error import URLError
 from urllib.request import urlopen
 
 from dotenv import load_dotenv
 from langchain.agents import create_agent
-from langchain.tools import tool
-from langchain_chroma import Chroma
 from langchain_ollama import ChatOllama
-from langchain_huggingface import HuggingFaceEmbeddings
+
+from tools import retrieve_relevant_chunks, fetch_up_to_date_doc, fetch_llms_txt_index
 
 load_dotenv()
 
@@ -34,7 +32,7 @@ def ensure_ollama_server() -> str:
                 last_error = RuntimeError(
                     f"Ollama model '{OLLAMA_MODEL}' is not installed. Run: ollama pull {OLLAMA_MODEL}"
                 )
-        except Exception as exc:  # pragma: no cover - this is runtime environment handling
+        except Exception as exc:
             last_error = exc
 
         try:
@@ -60,49 +58,8 @@ def ensure_ollama_server() -> str:
     )
 
 
-# Initialize embeddings
-embeddings = HuggingFaceEmbeddings(
-    model_name="sentence-transformers/all-MiniLM-L6-v2"
-)
-
-
-# Initialize vector store using the repo's local Chroma database
-vector_store = Chroma(
-    collection_name=os.getenv("PINECONE_INDEX_NAME", "langchain-docs-index"),
-    embedding_function=embeddings,
-    persist_directory="./chroma_db",
-)
-
-
-# Create retriever
-retriever = vector_store.as_retriever(
-    search_kwargs={
-        "k": 5
-    }
-)
-
-
-# Retrieval tool
-@tool
-def retrieve_relevant_chunks(user_query: str) -> str:
-    """Retrieve relevant chunks from the LangChain documentation."""
-
-    docs = retriever.invoke(user_query)
-
-    if not docs:
-        return "No relevant documentation was found."
-
-    chunks = []
-
-    for doc in docs:
-        source = doc.metadata.get("source", "Unknown")
-        chunks.append(f"Source: {source}\n{doc.page_content}")
-
-    return "\n\n---\n\n".join(chunks)
-
-
-# Create agent
 def create_langchain_agent():
+    """Create and configure the LangChain documentation assistant agent."""
     ensure_ollama_server()
 
     llm = ChatOllama(
@@ -115,28 +72,38 @@ You are an AI documentation assistant.
 
 When the user asks a question about LangChain:
 
-1. Always use the retrieve_relevant_chunks tool.
-2. Use the retrieved documentation as your primary source.
-3. Answer the user's question clearly and directly.
-4. Do not invent information that is not supported by the retrieved documentation.
-5. If the tool returns no relevant information, tell the user that you could not find relevant information in the documentation.
+1. Always start by using the `retrieve_relevant_chunks` tool to query the local vector index.
+2. Read the `[RETRIEVAL EVALUATION]` header returned by `retrieve_relevant_chunks`.
+3. If the evaluation status is `INSUFFICIENT` or `PARTIALLY_SUFFICIENT`, follow the recommendation and call `fetch_llms_txt_index` or `fetch_up_to_date_doc` to retrieve live up-to-date documentation.
+4. Synthesize your final answer based strictly on the retrieved documentation chunks and fetched live content.
+5. Do not invent information that is not supported by the retrieved documentation.
+6. If no relevant documentation can be found after checking live sources, inform the user clearly.
 """
 
-    agent = create_agent(
+
+    return create_agent(
         model=llm,
-        tools=[retrieve_relevant_chunks],
+        tools=[retrieve_relevant_chunks, fetch_up_to_date_doc, fetch_llms_txt_index],
         system_prompt=system_prompt,
     )
 
-    return agent
+
+_agent = None
 
 
-agent = create_langchain_agent()
+def get_agent():
+    """Lazy initializer for the LangChain agent."""
+    global _agent
+    if _agent is None:
+        _agent = create_langchain_agent()
+    return _agent
 
 
 # ============== Ask Agent a question (exported function) ==============
 def ask_agent(messages: list[dict]):
-    response = agent.invoke({
+    """Query the LangChain documentation agent with a list of message dicts."""
+    agent_instance = get_agent()
+    response = agent_instance.invoke({
         "messages": messages
     })
 
